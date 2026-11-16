@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ground Reference Maneuvers: CFI Interactive Lesson Plan</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #131c31;
+      --border: #233152;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #facc15;
+      --wind: #38bdf8;
+      --field: #064e3b;
+      --field-border: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 24px; max-width: 1150px; margin: 0 auto; }
+    
+    /* Top Navigation */
+    .tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab-btn {
+      background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+      padding: 10px 18px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;
+    }
+    .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+    /* Main Card */
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+      display: grid; grid-template-columns: 1.12fr 0.88fr; gap: 28px; margin-bottom: 24px;
+    }
+    @media (max-width: 850px) { .card { grid-template-columns: 1fr; } }
+
+    .maneuver-header { grid-column: 1 / -1; }
+    .maneuver-header h2 { font-size: 22px; margin-bottom: 8px; }
+    .maneuver-header p { color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+    .maneuver-header strong, .maneuver-header em { color: var(--text); }
+
+    /* Controls & Canvas */
+    .sim-wrapper {
+      background: #0d1527; border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    }
+    .controls { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    .ctrl-btn {
+      background: #1e293b; color: var(--text); border: 1px solid var(--border);
+      padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px; transition: 0.15s;
+    }
+    .ctrl-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .svg-box {
+      background: #070b14; border: 1px solid var(--border); border-radius: 10px;
+      width: 100%; aspect-ratio: 16 / 10.5; position: relative; overflow: hidden;
+    }
+    svg { width: 100%; height: 100%; display: block; }
+
+    /* Telemetry Readouts */
+    .telemetry { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .stat-box {
+      background: #111a2e; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 8px; text-align: center;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .stat-val { font-size: 14px; font-weight: 800; color: var(--accent); margin-top: 5px; line-height: 1.3; }
+
+    /* Right Column Teaching Points & Stacked Cards */
+    .points-title { color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: 0.6px; margin-bottom: 12px; text-transform: uppercase; }
+    .points-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .points-list li { font-size: 13.5px; line-height: 1.5; color: #cbd5e1; padding-left: 14px; position: relative; }
+    .points-list li::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
+    .points-list strong { color: #fff; }
+
+    .steps-stack { display: flex; flex-direction: column; gap: 10px; }
+    .step-card {
+      background: #111a2e; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+      cursor: pointer; transition: 0.15s;
+    }
+    .step-card.active { border-color: var(--accent); background: #162038; }
+    .step-card-header { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; margin-bottom: 4px; color: #fff; }
+    .badge {
+      background: var(--accent); color: #000; width: 21px; height: 21px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;
+    }
+    .step-card p { font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+    /* Quiz Section */
+    .quiz-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+    }
+    .quiz-card h3 { font-size: 18px; margin-bottom: 16px; color: var(--accent); }
+    .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 850px) { .quiz-grid { grid-template-columns: 1fr; } }
+    .q-box { background: #0d1527; border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .q-title { font-size: 13.5px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; }
+    .q-opt {
+      display: block; width: 100%; text-align: left; background: #131c31; color: var(--muted);
+      border: 1px solid var(--border); padding: 8px 10px; border-radius: 6px; margin-bottom: 6px;
+      cursor: pointer; font-size: 12.5px; transition: 0.15s;
+    }
+    .q-opt:hover { border-color: #475569; color: #fff; }
+    .q-opt.correct { background: #064e3b; border-color: #10b981; color: #ecfdf5; font-weight: 600; }
+    .q-opt.wrong { background: #450a0a; border-color: #ef4444; color: #fef2f2; }
+    .footer-ref { margin-top: 16px; font-size: 12px; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="setManeuver('rect', this)">1 · Rectangular Course (Task A)</button>
+    <button class="tab-btn" onclick="setManeuver('sturns', this)">2 · S-Turns Across a Road (Task B)</button>
+    <button class="tab-btn" onclick="setManeuver('turns', this)">3 · Turns Around a Point & Pylons (Task C/D)</button>
+  </div>
+
+  <h1>Ground Reference Maneuvers (AFH Ch. 7)</h1>
+  <div class="subtitle">Flight Instructor ACS (FAA-S-ACS-25), Area VII, Tasks A–D · K1, K2, R1–R3, S1–S5</div>
+
+  <div class="card">
+    <div class="maneuver-header">
+      <h2 id="m-title"></h2>
+      <p id="m-desc"></p>
+    </div>
+
+    <!-- Left: Interactive SVG & Telemetry -->
+    <div>
+      <div class="sim-wrapper">
+        <div class="controls" id="stepButtons"></div>
+
+        <div class="svg-box">
+          <svg viewBox="0 0 600 380" id="simSvg">
+            <!-- Wind Indicator -->
+            <g transform="translate(24, 24)">
+              <rect width="128" height="44" rx="6" fill="#0f172a" stroke="#1e293b" />
+              <text x="64" y="17" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">WIND (FROM LEFT)</text>
+              <line x1="20" y1="30" x2="98" y2="30" stroke="#38bdf8" stroke-width="2.5" />
+              <polygon points="98,26 107,30 98,34" fill="#38bdf8" />
+            </g>
+
+            <!-- Dynamic Ground Reference (Field / Road / Pylon) -->
+            <g id="groundRef"></g>
+
+            <!-- Dotted Flight Path -->
+            <path id="flightPath" fill="none" stroke="#facc15" stroke-width="3" stroke-dasharray="6,6" />
+
+            <!-- Step Number Markers on Path -->
+            <g id="stepMarkers"></g>
+
+            <!-- Airplane Icon -->
+            <g id="airplane">
+              <circle r="13" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" opacity="0.9" />
+              <path d="M 10,0 L 3,-2 L 0,-10 L -3,-10 L -2,-2 L -7,-2 L -9,-5 L -11,-5 L -10,0 L -11,5 L -9,5 L -7,2 L -2,2 L -3,10 L 0,10 L 3,2 Z" fill="#facc15" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="telemetry">
+          <div class="stat-box">
+            <div class="stat-label">Groundspeed</div>
+            <div class="stat-val" id="gsVal">HIGHEST<br>(Downwind)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Bank Angle</div>
+            <div class="stat-val" id="bankVal">STEEPEST<br>(≤45°)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Nose Alignment</div>
+            <div class="stat-val" id="crabVal">TANGENT<br>(0° Crab)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Teaching Points & Stacked Phase Cards -->
+    <div>
+      <div class="points-title">FAA Key Teaching Points (AFH Ch. 7)</div>
+      <ul class="points-list" id="teachingList"></ul>
+      <div class="steps-stack" id="stepsStack"></div>
+    </div>
+  </div>
+
+  <!-- CFI Oral & ACS Quiz -->
+  <div class="quiz-card">
+    <h3>Check Understanding (CFI Oral & ACS Review)</h3>
+    <div class="quiz-grid">
+      <div class="q-box">
+        <div class="q-title">1. Why do standard ground reference maneuvers enter on the downwind leg?</div>
+        <button class="q-opt" onclick="checkAns(this, false)">To minimize fuel burn during entry</button>
+        <button class="q-opt" onclick="checkAns(this, true)">To establish the steepest required bank angle immediately upon entry</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Because crab angle is highest on downwind</button>
+        <button class="q-opt" onclick="checkAns(this, false)">To keep pivotal altitude below 500 ft AGL</button>
+      </div>
+      <div class="q-box">
+        <div class="q-title">2. During a Rectangular Course, which corner requires the SHALLOWEST bank angle?</div>
+        <button class="q-opt" onclick="checkAns(this, false)">Turn from downwind to base</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Turn from base to upwind</button>
+        <button class="q-opt" onclick="checkAns(this, true)">Turn from upwind to crosswind</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Turn from crosswind to downwind</button>
+      </div>
+      <div class="q-box">
+        <div class="q-title">3. During S-Turns Across a Road, how must the wings and fuselage be oriented at every road crossing?</div>
+        <button class="q-opt" onclick="checkAns(this, false)">Banked 30° with crab into the wind</button>
+        <button class="q-opt" onclick="checkAns(this, true)">Wings level and perpendicular to the road</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Wings banked toward the wind, track perpendicular</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Wings level at a 45° entry angle</button>
+      </div>
+      <div class="q-box">
+        <div class="q-title">4. In Turns Around a Point, where is the airplane's nose pointed when on the upwind-to-downwind crosswind leg?</div>
+        <button class="q-opt" onclick="checkAns(this, false)">Slightly inside the circular ground track</button>
+        <button class="q-opt" onclick="checkAns(this, true)">Slightly outside the circular ground track (crabbing into the wind)</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Directly tangent to the circle with zero crab</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Directly at the pylon</button>
+      </div>
+      <div class="q-box">
+        <div class="q-title">5. During Eights on Pylons, if the reference line moves FORWARD toward the nose of the airplane, what correction is required?</div>
+        <button class="q-opt" onclick="checkAns(this, false)">Apply bottom rudder to bring the wingtip back</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Climb slightly because you are below pivotal altitude</button>
+        <button class="q-opt" onclick="checkAns(this, true)">Lower the nose (descend) because you are ABOVE pivotal altitude</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Reduce throttle to slow groundspeed</button>
+      </div>
+      <div class="q-box">
+        <div class="q-title">6. What are the Private/Commercial ACS completion standards for altitude and airspeed during Ground Reference Maneuvers?</div>
+        <button class="q-opt" onclick="checkAns(this, true)">Altitude ±100 ft; Airspeed ±10 knots</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Altitude ±50 ft; Airspeed ±5 knots</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Altitude ±150 ft; Airspeed ±15 knots</button>
+        <button class="q-opt" onclick="checkAns(this, false)">Altitude ±200 ft; Airspeed ±10 knots</button>
+      </div>
+    </div>
+    <div class="footer-ref">
+      References: FAA-H-8083-3C Airplane Flying Handbook (Chapter 7: Ground Reference Maneuvers), FAA-S-ACS-25 Flight Instructor for Airplane Category ACS (Area VII).
+    </div>
+  </div>
+
+  <script>
+    const MANEUVERS = {
+      rect: {
+        title: "Rectangular Course — Wind Drift & Corner Bank Logic",
+        desc: "Simulates airport traffic pattern geometry at <strong>600 to 1,000 ft AGL</strong>. Maintain an equal distance (½ to ¾ mile) laterally offset from the field boundary so it remains clearly visible outside the wingtip.",
+        path: "M 70,355 L 130,305 L 440,305 A 45,45 0 0 0 485,260 L 485,125 A 45,45 0 0 0 440,80 L 160,80 A 45,45 0 0 0 115,125 L 115,260 A 45,45 0 0 0 160,305",
+        groundSVG: `
+          <rect x="165" y="125" width="270" height="135" fill="#064e3b" fill-opacity="0.35" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <text x="300" y="197" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">SELECTED GROUND FIELD</text>
+        `,
+        points: [
+          "<strong>Why 45° Downwind Entry:</strong> Gives maximum visibility to scan for pattern traffic and exposes highest tailwind groundspeed immediately.",
+          "<strong>Turn Timing Rule:</strong> Begin turns when the airplane is <strong>abeam the field corner</strong>, and roll out parallel to the next boundary.",
+          "<strong>Bank vs. Groundspeed:</strong> Higher groundspeed = larger turn radius at a given bank. <strong>Fastest GS = Steepest Bank</strong>; <strong>Slowest GS = Shallowest Bank</strong>.",
+          "<strong>ACS Standards:</strong> Maintain altitude within <strong>±100 feet</strong> and airspeed within <strong>±10 knots</strong>."
+        ],
+        steps: [
+          { t: 0.03, x: 95,  y: 334, title: "45° Downwind Entry", text: "Enter at 600–1,000 ft AGL at a 45° angle to the downwind leg. Clear the area thoroughly before turning onto the course." },
+          { t: 0.22, x: 285, y: 305, title: "Downwind Leg & Corner 1", text: "Highest groundspeed (tailwind). Turning from downwind to base requires the steepest bank angle and rapid roll-in." },
+          { t: 0.45, x: 485, y: 192, title: "Base Leg (Crab Into Wind)", text: "Wind from the left pushes you outward. Angle the nose left into the wind to track parallel to the eastern boundary." },
+          { t: 0.68, x: 300, y: 80,  title: "Upwind Leg & Corner 3", text: "Lowest groundspeed (headwind). Turning from upwind to crosswind requires the shallowest bank angle and slowest roll rate." },
+          { t: 0.88, x: 115, y: 192, title: "Crosswind Leg (Crab Into Wind)", text: "Crab into the wind (nose angled left/upwind) along the straight segment before turning back onto downwind." }
+        ]
+      },
+
+      sturns: {
+        title: "S-Turns Across a Road — AFH Fig. 7-6 Equal Semicircles",
+        desc: "Flown at <strong>600 to 1,000 ft AGL</strong> entering perpendicular to a straight ground reference line on the downwind side. Roll out wings-level and perpendicular at every road crossing while creating <strong>two equal-radius semicircles</strong> on opposite sides of the road.",
+        // Matches AFH Figure 7-6:
+        // Straight downwind entry from left -> Cross road at (300,60) ->
+        // Right 180° semicircle on downwind/right side of road to (300,190) ->
+        // Left 180° semicircle on upwind/left side of road to (300,320) -> Straight downwind exit
+        path: "M 120,60 L 300,60 A 65,65 0 0 1 300,190 A 65,65 0 0 0 300,320 L 470,320",
+        groundSVG: `
+          <!-- Vertical Road Down Center (Perpendicular to Wind) -->
+          <line x1="300" y1="15" x2="300" y2="365" stroke="#334155" stroke-width="14"/>
+          <line x1="300" y1="15" x2="300" y2="365" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="8,8"/>
+          <text x="314" y="34" fill="#94a3b8" font-size="10" font-weight="700" letter-spacing="0.5">REFERENCE ROAD</text>
+        `,
+        points: [
+          "<strong>AFH Fig. 7-6 Geometry:</strong> Enter perpendicular to the road on the downwind side and fly two symmetrical 180° semicircles of equal ground radius on opposite sides of the road.",
+          "<strong>Downwind Loop (East of Road):</strong> High initial tailwind groundspeed requires rolling immediately into the <strong>steepest bank</strong> right after crossing the road, then shallowing as you turn upwind.",
+          "<strong>Midpoint Road Crossing:</strong> Must cross the road <strong>wings-level and perpendicular</strong> (flying directly into the headwind with zero crab) before banking in the opposite direction.",
+          "<strong>Upwind Loop (West of Road):</strong> Low initial headwind groundspeed requires starting with a <strong>shallow bank</strong>, then progressively <strong>steepening bank</strong> as the turn accelerates back toward downwind."
+        ],
+        steps: [
+          { t: 0.16, x: 210, y: 60,  title: "Downwind Perpendicular Entry", text: "Enter straight-and-level perpendicular to the road on the downwind leg with maximum tailwind groundspeed." },
+          { t: 0.39, x: 365, y: 125, title: "First Semicircle (Downwind Side)", text: "Roll immediately into the steepest bank right after crossing the road, then gradually shallow the bank and crab into the wind as you turn toward the road." },
+          { t: 0.56, x: 300, y: 190, title: "Wings-Level Midpoint Road Crossing", text: "Arrive back at the road wings-level and perpendicular (flying directly into the wind at lowest groundspeed)." },
+          { t: 0.74, x: 235, y: 255, title: "Second Semicircle (Upwind Side)", text: "Begin the opposite turn with a shallow bank into the slow headwind, then progressively steepen bank as groundspeed builds toward the second crossing." },
+          { t: 0.91, x: 385, y: 320, title: "Final Crossing & Exit", text: "Cross the road wings-level and perpendicular on the downwind heading and resume straight-and-level flight." }
+        ]
+      },
+
+      turns: {
+        title: "Turns Around a Point & Eights on Pylons (Pivotal Altitude)",
+        desc: "<strong>Turns Around a Point:</strong> Constant radius circle at 600–1,000 ft AGL. <strong>Eights on Pylons:</strong> Fly at <em>Pivotal Altitude</em> (GS² ÷ 11.3 in knots) so the lateral reference line stays pinned to the pylon during turns.",
+        path: "M 300,310 A 120,120 0 1 0 300,70 A 120,120 0 1 0 300,310",
+        groundSVG: `
+          <circle cx="300" cy="190" r="6" fill="#10b981"/>
+          <text x="300" y="213" fill="#34d399" font-size="10" font-weight="700" letter-spacing="0.8" text-anchor="middle">PYLON / POINT</text>
+        `,
+        points: [
+          "<strong>Downwind Entry:</strong> Enter tangent to the circle on the downwind leg so the steepest required bank angle is established immediately.",
+          "<strong>Crab Angle Around Circle:</strong> Nose points <em>inside</em> the circle on the downwind-to-upwind half, and <em>outside</em> the circle on the upwind-to-downwind half.",
+          "<strong>Eights on Pylons Formula:</strong> Pivotal Altitude = <strong>GS² ÷ 11.3</strong> (knots) or <strong>GS² ÷ 15</strong> (mph).",
+          "<strong>Line Moves Forward/Back:</strong> If the reference point moves toward the <strong>nose (forward)</strong>, you are too high → <strong>descend</strong>. If it moves toward the <strong>tail (behind)</strong>, you are too low → <strong>climb</strong>."
+        ],
+        steps: [
+          { t: 0.00, x: 300, y: 310, title: "Downwind Abeam Point", text: "Maximum groundspeed; roll immediately into the steepest bank. In Eights on Pylons, pivotal altitude is highest here." },
+          { t: 0.25, x: 420, y: 190, title: "Crosswind (Turning Upwind)", text: "Groundspeed decreases; gradually shallow the bank and angle the nose slightly inside the circular track into the wind." },
+          { t: 0.50, x: 300, y: 70,  title: "Upwind Abeam Point", text: "Minimum groundspeed; shallowest bank angle. In Eights on Pylons, descend slightly to match the lower pivotal altitude." },
+          { t: 0.75, x: 180, y: 190, title: "Crosswind (Turning Downwind)", text: "Airplane crabs outward into the wind (nose pointed slightly outside the circle) while bank angle steepens as groundspeed increases." }
+        ]
+      }
+    };
+
+    let currentKey = 'rect';
+    let progress = 0;
+    let isPlaying = true;
+
+    const pathEl = document.getElementById('flightPath');
+    const groundEl = document.getElementById('groundRef');
+    const markersEl = document.getElementById('stepMarkers');
+    const planeEl = document.getElementById('airplane');
+    const stepButtonsEl = document.getElementById('stepButtons');
+    const teachingListEl = document.getElementById('teachingList');
+    const stepsStackEl = document.getElementById('stepsStack');
+
+    function setManeuver(key, btn) {
+      currentKey = key;
+      progress = 0;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const m = MANEUVERS[key];
+      document.getElementById('m-title').innerHTML = m.title;
+      document.getElementById('m-desc').innerHTML = m.desc;
+      pathEl.setAttribute('d', m.path);
+      groundEl.innerHTML = m.groundSVG;
+
+      // Render Top Control Buttons (Play + 1..N)
+      stepButtonsEl.innerHTML = `
+        <button class="ctrl-btn ${isPlaying ? 'active' : ''}" id="playBtn" onclick="togglePlay()">
+          ${isPlaying ? '⏸ Pause' : '▶ Play'}
+        </button>
+        ${m.steps.map((_, idx) => `
+          <button class="ctrl-btn step-num-btn" id="topStepBtn-${idx}" onclick="jumpToStep(${idx})">${idx + 1}</button>
+        `).join('')}
+      `;
+
+      // Render SVG Numbered Markers on Path
+      markersEl.innerHTML = m.steps.map((s, idx) => `
+        <g transform="translate(${s.x}, ${s.y})" style="cursor:pointer" onclick="jumpToStep(${idx})">
+          <circle r="10" fill="#0f172a" stroke="#facc15" stroke-width="2"/>
+          <text y="4" fill="#facc15" font-size="11" font-weight="800" text-anchor="middle">${idx + 1}</text>
+        </g>
+      `).join('');
+
+      // Render Key Teaching Points
+      teachingListEl.innerHTML = m.points.map(p => `<li>${p}</li>`).join('');
+
+      // Render Stacked Step Cards on Right
+      stepsStackEl.innerHTML = m.steps.map((s, idx) => `
+        <div class="step-card" id="stepCard-${idx}" onclick="jumpToStep(${idx})">
+          <div class="step-card-header">
+            <span class="badge">${idx + 1}</span>
+            <span>${s.title}</span>
+          </div>
+          <p>${s.text}</p>
+        </div>
+      `).join('');
+
+      updatePlane(0);
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('playBtn');
+      if (btn) {
+        btn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+        btn.classList.toggle('active', isPlaying);
+      }
+    }
+
+    function jumpToStep(idx) {
+      const m = MANEUVERS[currentKey];
+      if (m.steps[idx]) {
+        progress = m.steps[idx].t;
+        updatePlane(0);
+      }
+    }
+
+    function updatePlane(dt) {
+      const totalLen = pathEl.getTotalLength();
+      if (!totalLen) return;
+
+      const dist = progress * totalLen;
+      const p1 = pathEl.getPointAtLength(dist);
+      const p2 = pathEl.getPointAtLength(Math.min(dist + 2, totalLen));
+      const trackRad = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      const trackDeg = trackRad * (180 / Math.PI);
+
+      // Wind blows from Left -> Right (+X direction, 0 deg)
+      const tailwindFactor = Math.cos(trackRad);
+      const crosswindFactor = Math.sin(trackRad);
+
+      // Crab into wind (nose angled toward 180° / left when crossing wind)
+      const maxCrabDeg = 18;
+      const crabOffset = crosswindFactor * maxCrabDeg;
+      const headingDeg = trackDeg + crabOffset;
+
+      planeEl.setAttribute('transform', `translate(${p1.x}, ${p1.y}) rotate(${headingDeg})`);
+
+      // Advance along path scaled by simulated groundspeed
+      if (isPlaying && dt > 0) {
+        const baseSpeed = 72; // pixels per second
+        const gsMultiplier = 1 + (0.35 * tailwindFactor);
+        progress += ((baseSpeed * gsMultiplier * dt) / totalLen);
+        if (progress > 1) {
+          progress = currentKey === 'rect' ? 0.08 : 0;
+        }
+      }
+
+      // Update Telemetry Readouts
+      const gsEl = document.getElementById('gsVal');
+      const bankEl = document.getElementById('bankVal');
+      const crabEl = document.getElementById('crabVal');
+
+      if (tailwindFactor > 0.45) {
+        gsEl.innerHTML = 'HIGHEST<br>(Downwind)';
+        bankEl.innerHTML = 'STEEPEST<br>(≤45°)';
+      } else if (tailwindFactor < -0.45) {
+        gsEl.innerHTML = 'LOWEST<br>(Upwind)';
+        bankEl.innerHTML = 'SHALLOWEST';
+      } else {
+        gsEl.innerHTML = 'MODERATE<br>(Crosswind)';
+        bankEl.innerHTML = 'MEDIUM<br>(Varied)';
+      }
+
+      if (Math.abs(crosswindFactor) < 0.25) {
+        crabEl.innerHTML = 'TANGENT<br>(0° Crab)';
+      } else {
+        crabEl.innerHTML = `INTO WIND<br>(${Math.round(Math.abs(crabOffset))}° Crab)`;
+      }
+
+      // Highlight active step card & button
+      const steps = MANEUVERS[currentKey].steps;
+      let activeIdx = 0;
+      for (let i = 0; i < steps.length; i++) {
+        if (progress >= steps[i].t - 0.02) activeIdx = i;
+      }
+
+      steps.forEach((_, idx) => {
+        const card = document.getElementById(`stepCard-${idx}`);
+        const topBtn = document.getElementById(`topStepBtn-${idx}`);
+        if (card) card.classList.toggle('active', idx === activeIdx);
+        if (topBtn) topBtn.classList.toggle('active', !isPlaying && idx === activeIdx);
+      });
+    }
+
+    function checkAns(btn, isCorrect) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('.q-opt').forEach(b => b.classList.remove('correct', 'wrong'));
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+
+    let lastTime = performance.now();
+    function animate(now) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+      updatePlane(dt);
+      requestAnimationFrame(animate);
+    }
+
+    setManeuver('rect', document.querySelector('.tab-btn'));
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
